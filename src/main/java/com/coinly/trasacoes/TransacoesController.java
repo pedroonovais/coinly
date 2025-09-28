@@ -17,8 +17,8 @@ public class TransacoesController extends BaseController {
 
     private final TransacoesService transacoesService;
 
-    // Sempre redireciona a listagem para o dashboard
-    @GetMapping
+    // Captura /transacoes (sem barra), /transacoes/ (com barra) e /transacoes/index
+    @GetMapping({"", "/", "/index"})
     public String listRedirect() {
         return "redirect:/index";
     }
