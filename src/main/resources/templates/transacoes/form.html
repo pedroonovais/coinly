@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8" />
+  <title>Coinly - Transação</title>
+  <link href="https://cdn.jsdelivr.net/npm/daisyui@5" rel="stylesheet" type="text/css" />
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+</head>
+<body class="bg-gray-900 text-green-400 min-h-screen">
+
+  <!-- Navbar -->
+  <div class="navbar bg-gray-800 shadow-lg">
+    <div class="flex-1">
+      <a href="/index" class="btn btn-ghost normal-case text-xl text-green-400">Coinly</a>
+    </div>
+    <div class="flex-none gap-2 pr-4">
+      <span class="text-sm text-gray-300" th:if="${principal != null}">
+        <span class="opacity-70">Olá,</span> <b th:text="${principal.name}">Usuário</b>
+      </span>
+      <a href="/logout" class="btn btn-sm bg-gray-700 border-gray-600 hover:bg-gray-600">Sair</a>
+    </div>
+  </div>
+
+  <main class="container mx-auto px-4 py-6">
+
+    <div class="breadcrumbs text-sm mb-4">
+      <ul>
+        <li><a href="/index">Dashboard</a></li>
+        <li th:text="${transacao != null && transacao.id != null ? 'Editar' : 'Nova'}">Nova</li>
+      </ul>
+    </div>
+
+    <div class="card bg-gray-800 shadow max-w-3xl mx-auto">
+      <div class="card-body">
+        <h2 class="card-title" th:text="${transacao != null && transacao.id != null ? 'Editar transação' : 'Nova transação'}">Transação</h2>
+
+        <form th:object="${transacao}"
+              th:action="${transacao != null && transacao.id != null} ? @{/transacoes/{id}(id=${transacao.id})} : @{/transacoes/form}"
+              method="post"
+              class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+          <!-- Se for edição, envia método PUT -->
+          <input type="hidden" th:if="${transacao != null && transacao.id != null}" name="_method" value="put"/>
+          <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+
+          <div class="form-control md:col-span-2" th:if="${#fields.hasAnyErrors()}">
+            <div class="alert alert-error">
+              <span>Existem erros no formulário. Verifique os campos destacados.</span>
+            </div>
+          </div>
+
+          <div class="form-control md:col-span-2" th:if="${message}">
+            <div class="alert alert-success"><span th:text="${message}">OK</span></div>
+          </div>
+
+          <div class="form-control md:col-span-2" th:if="${transacao != null && transacao.id != null}">
+            <label class="label"><span class="label-text text-green-300">ID</span></label>
+            <input type="text" th:field="*{id}" class="input input-bordered bg-gray-700 border-gray-600" readonly/>
+          </div>
+
+          <div class="form-control md:col-span-2">
+            <label class="label"><span class="label-text text-green-300">Descrição</span></label>
+            <input type="text" th:field="*{descricao}" maxlength="120"
+                   class="input input-bordered bg-gray-700 border-gray-600" required/>
+            <span class="text-red-400 text-sm mt-1" th:errors="*{descricao}"></span>
+          </div>
+
+          <div class="form-control">
+            <label class="label"><span class="label-text text-green-300">Valor</span></label>
+            <input type="number" th:field="*{valor}" step="0.01" min="0.01"
+                   class="input input-bordered bg-gray-700 border-gray-600" required/>
+            <span class="text-red-400 text-sm mt-1" th:errors="*{valor}"></span>
+          </div>
+
+          <div class="form-control">
+            <label class="label"><span class="label-text text-green-300">Tipo</span></label>
+            <select th:field="*{tipo}" class="select select-bordered bg-gray-700 border-gray-600" required>
+              <option value="CREDITO">Crédito</option>
+              <option value="DEBITO">Débito</option>
+            </select>
+            <span class="text-red-400 text-sm mt-1" th:errors="*{tipo}"></span>
+          </div>
+
+          <div class="form-control">
+            <label class="label"><span class="label-text text-green-300">Status</span></label>
+            <select th:field="*{status}" class="select select-bordered bg-gray-700 border-gray-600" required>
+              <option value="PENDENTE">Pendente</option>
+              <option value="EFETIVADA">Efetivada</option>
+              <option value="CANCELADA">Cancelada</option>
+            </select>
+            <span class="text-red-400 text-sm mt-1" th:errors="*{status}"></span>
+          </div>
+
+          <div class="form-control">
+            <label class="label"><span class="label-text text-green-300">Data/Hora</span></label>
+            <input type="datetime-local" th:field="*{dataHora}"
+                   th:value="${#temporals.format(#temporals.createNow(),'yyyy-MM-dd''T''HH:mm')}"
+                   class="input input-bordered bg-gray-700 border-gray-600" required/>
+            <span class="text-red-400 text-sm mt-1" th:errors="*{dataHora}"></span>
+          </div>
+
+          <div class="form-control">
+            <label class="label"><span class="label-text text-green-300">Categoria</span></label>
+            <input type="text" th:field="*{categoria}" maxlength="60"
+                   class="input input-bordered bg-gray-700 border-gray-600"/>
+            <span class="text-red-400 text-sm mt-1" th:errors="*{categoria}"></span>
+          </div>
+
+          <div class="form-control">
+            <label class="label"><span class="label-text text-green-300">Moeda</span></label>
+            <input type="text" th:field="*{moeda}" maxlength="3"
+                   class="input input-bordered bg-gray-700 border-gray-600" value="BRL"/>
+            <span class="text-red-400 text-sm mt-1" th:errors="*{moeda}"></span>
+          </div>
+
+          <div class="form-control md:col-span-2">
+            <label class="label"><span class="label-text text-green-300">Observação</span></label>
+            <textarea th:field="*{observacao}" maxlength="255"
+                      class="textarea textarea-bordered bg-gray-700 border-gray-600"></textarea>
+            <span class="text-red-400 text-sm mt-1" th:errors="*{observacao}"></span>
+          </div>
+
+          <div class="mt-4 md:col-span-2 flex gap-2 justify-end">
+            <a href="/index" class="btn btn-ghost">Cancelar</a>
+            <button type="submit" class="btn bg-green-600 hover:bg-green-700 border-green-600">
+              <span th:text="${transacao != null && transacao.id != null ? 'Atualizar' : 'Salvar'}">Salvar</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+  </main>
+</body>
+</html>

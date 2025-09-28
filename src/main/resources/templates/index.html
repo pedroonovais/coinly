@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Coinly - Dashboard de Transações</title>
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@5" rel="stylesheet" type="text/css" />
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+</head>
+
+<body class="bg-gray-900 text-green-400 min-h-screen">
+
+    <!-- Navbar -->
+    <div class="navbar bg-gray-800 shadow-lg">
+        <div class="flex-1">
+            <a href="#" class="btn btn-ghost normal-case text-xl text-green-400">Coinly</a>
+        </div>
+        <div class="flex-none gap-2 pr-4">
+            <span class="text-sm text-gray-300" th:if="${principal != null}">
+                <span class="opacity-70">Olá,</span> <b th:text="${principal.name}">Usuário</b>
+            </span>
+            <a href="/logout" class="btn btn-sm bg-gray-700 border-gray-600 hover:bg-gray-600">Sair</a>
+        </div>
+    </div>
+
+    <main class="container mx-auto px-4 py-6 space-y-6">
+
+        <!-- Mensagem flash -->
+        <div th:if="${message}" class="alert alert-success shadow">
+            <span th:text="${message}">Operação realizada com sucesso.</span>
+        </div>
+
+        <!-- Barra de ações / Filtros -->
+        <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+            <form th:action="@{/index}" method="get" class="grid grid-cols-1 md:grid-cols-5 gap-3 w-full">
+                <div class="form-control">
+                    <label class="label"><span class="label-text text-green-300">Tipo</span></label>
+                    <select name="tipo" class="select select-bordered bg-gray-800 border-gray-700">
+                        <option th:value="${null}" th:selected="${filtroTipo == null}">Todos</option>
+                        <option value="CREDITO" th:selected="${filtroTipo != null and filtroTipo.name() == 'CREDITO'}">
+                            Crédito</option>
+                        <option value="DEBITO" th:selected="${filtroTipo != null and filtroTipo.name() == 'DEBITO'}">
+                            Débito</option>
+                    </select>
+                </div>
+
+                <div class="form-control">
+                    <label class="label"><span class="label-text text-green-300">Status</span></label>
+                    <select name="status" class="select select-bordered bg-gray-800 border-gray-700">
+                        <option th:value="${null}" th:selected="${filtroStatus == null}">Todos</option>
+                        <option value="PENDENTE"
+                            th:selected="${filtroStatus != null and filtroStatus.name() == 'PENDENTE'}">Pendente
+                        </option>
+                        <option value="EFETIVADA"
+                            th:selected="${filtroStatus != null and filtroStatus.name() == 'EFETIVADA'}">Efetivada
+                        </option>
+                        <option value="CANCELADA"
+                            th:selected="${filtroStatus != null and filtroStatus.name() == 'CANCELADA'}">Cancelada
+                        </option>
+                    </select>
+                </div>
+
+                <div class="form-control">
+                    <label class="label"><span class="label-text text-green-300">Data início</span></label>
+                    <input type="date" name="dataInicio" class="input input-bordered bg-gray-800 border-gray-700"
+                        th:value="${filtroDataInicio}" />
+                </div>
+
+                <div class="form-control">
+                    <label class="label"><span class="label-text text-green-300">Data fim</span></label>
+                    <input type="date" name="dataFim" class="input input-bordered bg-gray-800 border-gray-700"
+                        th:value="${filtroDataFim}" />
+                </div>
+
+                <div class="form-control">
+                    <label class="label"><span class="label-text">&nbsp;</span></label>
+                    <button type="submit" class="btn bg-green-600 hover:bg-green-700 border-green-600 w-full">
+                        Filtrar
+                    </button>
+                </div>
+            </form>
+
+            <!-- Botão Nova Transação -->
+            <label for="modal-new" class="btn bg-gray-700 hover:bg-gray-600 border-gray-600 md:ml-4">
+                + Nova transação
+            </label>
+        </div>
+
+        <!-- Cards resumo -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="card bg-gray-800 shadow">
+                <div class="card-body">
+                    <h2 class="card-title text-green-300">Total Crédito</h2>
+                    <p class="text-3xl font-bold"
+                        th:text="${totalCredito != null ? #numbers.formatDecimal(totalCredito,1,'COMMA',2,'POINT') : '0,00'}">
+                        0,00</p>
+                </div>
+            </div>
+            <div class="card bg-gray-800 shadow">
+                <div class="card-body">
+                    <h2 class="card-title text-green-300">Total Débito</h2>
+                    <p class="text-3xl font-bold"
+                        th:text="${totalDebito != null ? #numbers.formatDecimal(totalDebito,1,'COMMA',2,'POINT') : '0,00'}">
+                        0,00</p>
+                </div>
+            </div>
+            <div class="card bg-gray-900 shadow border border-green-700">
+                <div class="card-body">
+                    <h2 class="card-title text-green-400">Saldo</h2>
+                    <p class="text-3xl font-extrabold"
+                        th:classappend="${saldo != null and saldo >= 0} ? 'text-green-400' : 'text-red-400'"
+                        th:text="${saldo != null ? #numbers.formatDecimal(saldo,1,'COMMA',2,'POINT') : '0,00'}">0,00</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Estatísticas simples -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="card bg-gray-800 shadow">
+                <div class="card-body">
+                    <h3 class="card-title">Transações por Tipo</h3>
+                    <div class="stats bg-transparent shadow">
+                        <div class="stat">
+                            <div class="stat-title">Crédito</div>
+                            <div class="stat-value text-green-400" th:text="${qtCredito}">0</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-title">Débito</div>
+                            <div class="stat-value text-green-400" th:text="${qtDebito}">0</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card bg-gray-800 shadow">
+                <div class="card-body">
+                    <h3 class="card-title">Transações por Status</h3>
+                    <div class="stats bg-transparent shadow">
+                        <div class="stat">
+                            <div class="stat-title">Pendente</div>
+                            <div class="stat-value" th:text="${qtPend}">0</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-title">Efetivada</div>
+                            <div class="stat-value" th:text="${qtEfet}">0</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-title">Cancelada</div>
+                            <div class="stat-value" th:text="${qtCanc}">0</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabela de transações -->
+        <div class="card bg-gray-800 shadow">
+            <div class="card-body">
+                <h3 class="card-title">Transações</h3>
+                <div class="overflow-x-auto">
+                    <table class="table table-zebra">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Data</th>
+                                <th>Descrição</th>
+                                <th>Categoria</th>
+                                <th>Tipo</th>
+                                <th>Status</th>
+                                <th class="text-right">Valor</th>
+                                <th>Moeda</th>
+                                <th class="text-right">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="t,i : ${transacoes}">
+                                <td th:text="${i.index + 1}">1</td>
+                                <td
+                                    th:text="${t.dataHora != null ? #temporals.format(t.dataHora, 'dd/MM/yyyy HH:mm') : '-'}">
+                                    -</td>
+                                <td>
+                                    <span class="font-semibold" th:text="${t.descricao}">Descrição</span>
+                                    <div class="text-xs text-gray-400" th:if="${t.observacao}"
+                                        th:text="${t.observacao}">Obs</div>
+                                </td>
+                                <td th:text="${t.categoria}">-</td>
+                                <td><span class="badge badge-outline" th:text="${t.tipo}">-</span></td>
+                                <td><span class="badge" th:text="${t.status}">-</span></td>
+                                <td class="text-right"
+                                    th:text="${t.valor != null ? #numbers.formatDecimal(t.valor,1,'COMMA',2,'POINT') : '0,00'}">
+                                    0,00</td>
+                                <td th:text="${t.moeda}">-</td>
+                                <td class="text-right space-x-2">
+                                    <a th:href="@{'/transacoes/' + ${t.id} + '/edit'}"
+                                        class="btn btn-xs bg-gray-700 border-gray-600 hover:bg-gray-600">Editar</a>
+
+                                    <form th:action="@{'/transacoes/' + ${t.id}}" method="post" class="inline">
+                                        <input type="hidden" name="_method" value="delete" />
+                                        <input type="hidden" th:name="${_csrf.parameterName}"
+                                            th:value="${_csrf.token}" />
+                                        <button type="submit" class="btn btn-xs btn-error"
+                                            onclick="return confirm('Confirma excluir esta transação?')">
+                                            Excluir
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                            <tr th:if="${transacoes == null or #lists.isEmpty(transacoes)}">
+                                <td colspan="9" class="text-center text-gray-400 py-6">Nenhuma transação encontrada.
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Modal Nova Transação -->
+    <input type="checkbox" id="modal-new" class="modal-toggle" />
+    <div class="modal">
+        <div class="modal-box bg-gray-800">
+            <h3 class="font-bold text-lg mb-4">Nova transação</h3>
+
+            <form th:action="@{/transacoes/form}" method="post" th:object="${transacao}">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div class="form-control">
+                        <label class="label"><span class="label-text text-green-300">Descrição</span></label>
+                        <input type="text" th:field="*{descricao}" maxlength="120"
+                            class="input input-bordered bg-gray-700 border-gray-600" required />
+                    </div>
+
+                    <div class="form-control">
+                        <label class="label"><span class="label-text text-green-300">Valor</span></label>
+                        <input type="number" th:field="*{valor}" step="0.01" min="0.01"
+                            class="input input-bordered bg-gray-700 border-gray-600" required />
+                    </div>
+
+                    <div class="form-control">
+                        <label class="label"><span class="label-text text-green-300">Tipo</span></label>
+                        <select th:field="*{tipo}" class="select select-bordered bg-gray-700 border-gray-600" required>
+                            <option value="CREDITO">Crédito</option>
+                            <option value="DEBITO">Débito</option>
+                        </select>
+                    </div>
+
+                    <div class="form-control">
+                        <label class="label"><span class="label-text text-green-300">Status</span></label>
+                        <select th:field="*{status}" class="select select-bordered bg-gray-700 border-gray-600"
+                            required>
+                            <option value="PENDENTE">Pendente</option>
+                            <option value="EFETIVADA">Efetivada</option>
+                            <option value="CANCELADA">Cancelada</option>
+                        </select>
+                    </div>
+
+                    <div class="form-control">
+                        <label class="label"><span class="label-text text-green-300">Data/Hora</span></label>
+                        <input type="datetime-local" th:field="*{dataHora}"
+                            th:value="${#temporals.format(#temporals.createNow(),'yyyy-MM-dd''T''HH:mm')}"
+                            class="input input-bordered bg-gray-700 border-gray-600" required />
+                    </div>
+
+                    <div class="form-control">
+                        <label class="label"><span class="label-text text-green-300">Categoria</span></label>
+                        <input type="text" th:field="*{categoria}" maxlength="60"
+                            class="input input-bordered bg-gray-700 border-gray-600" />
+                    </div>
+
+                    <div class="form-control">
+                        <label class="label"><span class="label-text text-green-300">Moeda</span></label>
+                        <input type="text" th:field="*{moeda}" maxlength="3"
+                            class="input input-bordered bg-gray-700 border-gray-600" value="BRL" />
+                    </div>
+
+                    <div class="form-control md:col-span-2">
+                        <label class="label"><span class="label-text text-green-300">Observação</span></label>
+                        <textarea th:field="*{observacao}" maxlength="255"
+                            class="textarea textarea-bordered bg-gray-700 border-gray-600"></textarea>
+                    </div>
+                </div>
+
+                <div class="modal-action">
+                    <label for="modal-new" class="btn btn-ghost">Cancelar</label>
+                    <button type="submit" class="btn bg-green-600 hover:bg-green-700 border-green-600">
+                        Salvar
+                    </button>
+                </div>
+            </form>
+        </div>
+        <label class="modal-backdrop" for="modal-new">Close</label>
+    </div>
+
+</body>
+
+</html>
