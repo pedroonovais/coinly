@@ -1,6 +1,5 @@
 package com.coinly.trasacoes;
 
-import com.coinly.helper.AppConstants;
 import com.coinly.helper.BaseService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -31,7 +30,7 @@ public class TransacoesService implements BaseService<Transacoes, TransacoesDTO>
     public TransacoesDTO findById(Long id) {
         return transacoesRepository.findById(id)
                 .map(TransacoesDTO::fromEntity)
-                .orElseThrow(() -> new RuntimeException(AppConstants.ERR_TRANSACAO_NAO_ENCONTRADA));
+                .orElseThrow(() -> new RuntimeException("Transação não encontrada"));
     }
 
     @Override
@@ -41,7 +40,7 @@ public class TransacoesService implements BaseService<Transacoes, TransacoesDTO>
         if (dto.getId() != null) {
             // Atualização - busca entidade existente
             entity = transacoesRepository.findById(dto.getId())
-                    .orElseThrow(() -> new RuntimeException(AppConstants.ERR_TRANSACAO_NAO_ENCONTRADA));
+                    .orElseThrow(() -> new RuntimeException("Transação não encontrada"));
             applyDtoToEntity(dto, entity);
         } else {
             // Criação - nova entidade
@@ -56,7 +55,7 @@ public class TransacoesService implements BaseService<Transacoes, TransacoesDTO>
     @Transactional
     public void delete(Long id) {
         if (!transacoesRepository.existsById(id)) {
-            throw new RuntimeException(AppConstants.ERR_TRANSACAO_NAO_ENCONTRADA);
+            throw new RuntimeException("Transação não encontrada");
         }
         transacoesRepository.deleteById(id);
     }
@@ -102,6 +101,6 @@ public class TransacoesService implements BaseService<Transacoes, TransacoesDTO>
     /** Busca transação por ID como entidade (para o dashboard). */
     public Transacoes findByIdEntity(Long id) {
         return transacoesRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException(AppConstants.ERR_TRANSACAO_NAO_ENCONTRADA));
+                .orElseThrow(() -> new RuntimeException("Transação não encontrada"));
     }
 }
