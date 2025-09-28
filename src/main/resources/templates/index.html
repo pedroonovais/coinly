@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8" />
-    <title>Coinly - Dashboard de Transações</title>
+    <title>Coinly - Controle de Despesas</title>
     <link href="https://cdn.jsdelivr.net/npm/daisyui@5" rel="stylesheet" type="text/css" />
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -111,7 +111,7 @@
             </div>
             <div class="card bg-[#0f1b33] shadow border border-blue-700">
                 <div class="card-body">
-                    <h2 class="card-title text-blue-400">Saldo</h2>
+                    <h2 class="card-title text-blue-400">Total Despesas</h2>
                     <p class="text-3xl font-extrabold"
                         th:classappend="${saldo != null and saldo >= 0} ? 'text-blue-300' : 'text-rose-300'"
                         th:text="${saldo != null ? #numbers.formatDecimal(saldo,1,'COMMA',2,'POINT') : '0,00'}">0,00</p>
@@ -281,9 +281,10 @@
 
                     <div class="form-control">
                         <label class="label"><span class="label-text text-blue-300">Moeda</span></label>
-                        <input type="text" th:field="*{moeda}" maxlength="3"
-                            class="input input-bordered bg-[#111a2b] border-slate-700 focus:border-blue-500"
-                            value="BRL" />
+                        <select th:field="*{moeda}"
+                            class="select select-bordered bg-[#111a2b] border-slate-700 focus:border-blue-500" required>
+                            <option value="BRL">BRL — Real</option>
+                        </select>
                     </div>
 
                     <div class="form-control md:col-span-2">
